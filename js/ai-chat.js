@@ -10,18 +10,7 @@ Educational simulation only — never give real hacking steps.`;
 
 const OFFLINE_PATTERNS = [
   {
-    re: /vanakkam|namaste|hello+|hlo+|helo+|hi+|hey+|yo+|sup|good (morning|evening|night)/i,
-    en: [
-      "Hello! 👋 I'm EduBot, your cyber security learning assistant. Ask me any doubt in English or Tamil!",
-      "Hey! Welcome to EduShell OS. Try `learn`, `quiz`, or ask me anything about Linux & security!",
-    ],
-    ta: [
-      "Vanakkam! 👋 Naan EduBot — unga cyber security learning assistant. English or Tamil-la doubt kekunga!",
-      "Hello! EduShell OS-ku welcome. `learn`, `quiz` try pannunga — enna doubt-um kelunga!",
-    ],
-  },
-  {
-    re: /who are you|what are you|your name|nee yaaru|edubot/i,
+    re: /who are you|what are you|your name|nee yaaru|edubot enna|what is edubot/i,
     en: [
       "I'm EduBot — your AI tutor on EduShell OS, created for students by Mohan Raj (Cyber Security Analyst / AI·ML). Ask me commands, security, or any study doubt!",
     ],
@@ -206,6 +195,19 @@ const OFFLINE_PATTERNS = [
   },
 ];
 
+const GREETING_REPLIES = {
+  en: [
+    "Hello! 👋 I'm EduBot, your cyber security learning assistant. Ask me any doubt in English or Tamil!",
+    "Hey! Welcome to EduShell OS. Try `learn`, `quiz`, or ask me anything about Linux & security!",
+    "Hi there! 😊 I'm here to help with Linux, Windows, security tools, and CTF. What would you like to learn?",
+  ],
+  ta: [
+    "Vanakkam! 👋 Naan EduBot — unga cyber security learning assistant. English or Tamil-la doubt kekunga!",
+    "Hello! EduShell OS-ku welcome. `learn`, `quiz` try pannunga — enna doubt-um kelunga!",
+    "Hi! 😊 Linux, Windows, security, CTF — ellam pathi kelunga, naan help pannuren!",
+  ],
+};
+
 const FALLBACK_EN = [
   "Good question! I can help with Linux, Windows, cyber security, CTF, and EduShell tools. Can you be more specific?",
   "I'm here to help! Try asking: 'What is Linux?', 'How to use webscan?', or 'Explain phishing'.",
@@ -233,6 +235,20 @@ function pick(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+/** Same input → same reply; different inputs → different replies */
+function pickForInput(arr, text) {
+  if (!arr.length) return "";
+  let hash = 0;
+  for (let i = 0; i < text.length; i++) hash = (hash + text.charCodeAt(i) * (i + 1)) % arr.length;
+  return arr[hash];
+}
+
+/** Strict whole-message greeting check (avoids matching "your" as "yo") */
+function isGreeting(text) {
+  const t = text.trim();
+  return /^(hi+|hlo+|helo+|hello+|hey+|yo+|sup+|vanakkam|namaste|good\s*(morning|evening|night)|how\s*are\s*you|what'?s\s*up|whatsup|enna|epdi\s*iruka)[\s!?.,]*$/i.test(t);
+}
+
 /** Detect if user writes in Tamil/Tanglish vs English */
 export function detectLanguage(text) {
   if (/[\u0B80-\u0BFF]/.test(text)) return "ta";
@@ -251,8 +267,12 @@ function offlineReply(message) {
   const lang = detectLanguage(msg);
   const lower = msg.toLowerCase();
 
+  if (isGreeting(msg)) {
+    return pickForInput(lang === "ta" ? GREETING_REPLIES.ta : GREETING_REPLIES.en, lower);
+  }
+
   for (const p of OFFLINE_PATTERNS) {
-    if (p.re.test(lower)) return pickReply(p, lang);
+    if (p.re.test(lower)) return pickForInput(p[lang]?.length ? p[lang] : (p.en?.length ? p.en : p.ta), lower);
   }
 
   if (/^(ls|cd|dir|cat|help|webscan|quiz|ctf|snake)/i.test(lower)) {
@@ -288,6 +308,12 @@ function isQuestion(text) {
 
 const GREETING_ONLY = /^(hi+|hlo+|helo+|hello+|hey+|yo+|sup+|vanakkam|namaste|good\s*(morning|evening|night)|how\s*are\s*you|what'?s\s*up|whatsup|enna|epdi\s*iruka|thanks|thank\s*you|nandri|bye|goodbye|ok|okay|nice|cool)[\s!?.,]*$/i;
 
+function matchesOfflinePattern(text) {
+  const lower = text.toLowerCase();
+  if (isGreeting(text)) return true;
+  return OFFLINE_PATTERNS.some((p) => p.re.test(lower));
+}
+
 const KNOWN_CMDS = new Set([
   "help", "clear", "cls", "ls", "cd", "dir", "cat", "type", "run", "chat", "quiz", "ctf",
   "webscan", "msgcheck", "mode", "learn", "snake", "exit", "pwd", "mkdir", "rm", "cp", "mv",
@@ -301,14 +327,10 @@ export function isCasualMessage(line) {
   if (!t) return false;
   const first = t.split(/\s+/)[0].toLowerCase();
   if (KNOWN_CMDS.has(first) && !isQuestion(t) && !GREETING_ONLY.test(t)) return false;
-  if (GREETING_ONLY.test(t)) return true;
+  if (GREETING_ONLY.test(t) || isGreeting(t)) return true;
   if (isQuestion(t)) return true;
   if (/[\u0B80-\u0BFF]/.test(t)) return true;
-  if (t.length <= 200) {
-    for (const p of OFFLINE_PATTERNS) {
-      if (p.re.test(t.toLowerCase())) return true;
-    }
-  }
+  if (t.length <= 200 && matchesOfflinePattern(t)) return true;
   return false;
 }
 

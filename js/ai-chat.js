@@ -10,7 +10,7 @@ Educational simulation only — never give real hacking steps.`;
 
 const OFFLINE_PATTERNS = [
   {
-    re: /vanakkam|namaste|hello|hlo|helo|hii+|hey+|yo|sup|good (morning|evening|night)/i,
+    re: /vanakkam|namaste|hello+|hlo+|helo+|hi+|hey+|yo+|sup|good (morning|evening|night)/i,
     en: [
       "Hello! 👋 I'm EduBot, your cyber security learning assistant. Ask me any doubt in English or Tamil!",
       "Hey! Welcome to EduShell OS. Try `learn`, `quiz`, or ask me anything about Linux & security!",
@@ -286,7 +286,7 @@ function isQuestion(text) {
   );
 }
 
-const GREETING_ONLY = /^(hi|hlo|helo|hello|hey+|hii+|yo|sup|vanakkam|namaste|good\s*(morning|evening|night)|how\s*are\s*you|what'?s\s*up|whatsup|enna|epdi\s*iruka|thanks|thank\s*you|nandri|bye|goodbye|ok|okay|nice|cool)[\s!?.,]*$/i;
+const GREETING_ONLY = /^(hi+|hlo+|helo+|hello+|hey+|yo+|sup+|vanakkam|namaste|good\s*(morning|evening|night)|how\s*are\s*you|what'?s\s*up|whatsup|enna|epdi\s*iruka|thanks|thank\s*you|nandri|bye|goodbye|ok|okay|nice|cool)[\s!?.,]*$/i;
 
 const KNOWN_CMDS = new Set([
   "help", "clear", "cls", "ls", "cd", "dir", "cat", "type", "run", "chat", "quiz", "ctf",

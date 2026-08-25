@@ -9,7 +9,7 @@ Never give real hacking instructions. Educational simulation only.`;
 const GREETINGS = ["hi", "hello", "hey", "vanakkam", "namaste", "good morning", "good evening", "start"];
 
 const OFFLINE_PATTERNS = [
-  { re: /vanakkam|namaste|hello|hi|hey|good (morning|evening|night)/i, replies: [
+  { re: /vanakkam|namaste|hello|hlo|helo|hii+|hey+|yo|sup|good (morning|evening|night)/i, replies: [
     "Vanakkam! 👋 Naan EduBot — unga cyber security learning assistant. Enna help venum?",
     "Hello! Welcome to EduShell OS. Linux, security tools, CTF — ellam kekunga!",
     "Hey! Ready to learn? Try `learn` or `cheatsheet` to start.",
@@ -85,20 +85,41 @@ function offlineReply(message) {
     if (p.re.test(msg)) return pick(p.replies);
   }
 
-  // Command-like input
   if (/^(ls|cd|dir|cat|help|webscan|quiz|ctf|snake)/i.test(msg)) {
-    return `Type \`${msg.split(/\s+/)[0]}\` directly in terminal (exit chat first with 'exit'). I can explain — ask "how to use ${msg.split(/\s+/)[0]}"!`;
+    return `Type \`${msg.split(/\s+/)[0]}\` to run it. Ask me "how to use ${msg.split(/\s+/)[0]}" for help!`;
   }
 
-  // Question mark
   if (msg.includes("?")) {
     return pick([
-      "Good question! Check Help Guide (press `?`) or Security Demos for detailed lessons.",
+      "Good question! Press `?` for help or try `learn` for tutorials.",
       "Adha pathi `learn` command try pannunga — step by step tutorial kudukum!",
     ]);
   }
 
   return pick(FALLBACK_REPLIES);
+}
+
+const GREETING_ONLY = /^(hi|hlo|helo|hello|hey+|hii+|yo|sup|vanakkam|namaste|good\s*(morning|evening|night)|how\s*are\s*you|what'?s\s*up|whatsup|enna|epdi\s*iruka|thanks|thank\s*you|nandri|bye|goodbye|ok|okay|nice|cool)[\s!?.,]*$/i;
+
+const KNOWN_CMDS = new Set([
+  "help", "clear", "cls", "ls", "cd", "dir", "cat", "type", "run", "chat", "quiz", "ctf",
+  "webscan", "msgcheck", "mode", "learn", "snake", "exit", "pwd", "mkdir", "rm", "cp", "mv",
+  "grep", "history", "whoami", "date", "hashcheck", "passcheck", "guide", "cheatsheet",
+]);
+
+/** Detect casual human messages (not shell commands) */
+export function isCasualMessage(line) {
+  const t = line.trim();
+  if (!t) return false;
+  const first = t.split(/\s+/)[0].toLowerCase();
+  if (KNOWN_CMDS.has(first)) return false;
+  if (GREETING_ONLY.test(t)) return true;
+  if (t.length <= 60 && !t.startsWith("-") && !t.includes("=")) {
+    for (const p of OFFLINE_PATTERNS) {
+      if (p.re.test(t)) return true;
+    }
+  }
+  return false;
 }
 
 async function groqReply(message, apiKey, username) {

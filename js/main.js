@@ -15,7 +15,7 @@ import { sounds, setSoundEnabled } from "./sounds.js";
 import { loadSettings, applySettings, saveSettings, toggleFavorite } from "./settings.js";
 import { openSettings, openFileManager, openRecycleBin, openStartMenu, openProgress, openLeaderboard, openHelp, openSecurityDemos, openCtfLab } from "./os-apps.js";
 import { isGameCmd, openGameTerminal } from "./game-terminal.js";
-import { getAiReply, getChatWelcome, resetChatHistory } from "./ai-chat.js";
+import { getAiReply, getChatWelcome, resetChatHistory, isCasualMessage } from "./ai-chat.js";
 import { startCtf, startCtfMenu, checkCtfAnswer, clearCtf, formatCtfMenu, getCtfState, CTF_CHALLENGES } from "./ctf.js";
 import { trackTool, trackCommand, trackQuizScore, trackCtfComplete, trackScan, trackGame } from "./progress.js";
 import { addScore } from "./leaderboard.js";
@@ -570,11 +570,30 @@ async function executeCommand(rawLine) {
   appendLine(getPrompt(shell) + line, "cmd");
   if (!line) return;
 
+  addHistory(shell, line);
+
+  // Human-like reply for hi, hello, hlo, casual talk (no `chat` needed)
+  if (isCasualMessage(line)) {
+    trackCommand();
+    const typingEl = document.createElement("div");
+    typingEl.className = "line info chat-typing";
+    typingEl.textContent = "EduBot is typing...";
+    outputEl.appendChild(typingEl);
+    scrollBottom();
+    getAiReply(line, settings).then(({ text, mode }) => {
+      typingEl.remove();
+      const tag = mode !== "offline" ? ` [${mode}]` : "";
+      appendLine(`EduBot${tag}: ${text}`, "info");
+      appendLine("💬 Type `chat` for full conversation", "info");
+      updateUI();
+    });
+    return;
+  }
+
   trackCommand();
   const cmdName = parseArgs(line)[0]?.toLowerCase();
   if (cmdName) trackTool(cmdName);
 
-  addHistory(shell, line);
   const args = parseArgs(line);
   const results = shell.mode === "windows" ? await runWindows(shell, args, line) : await runLinux(shell, args, line);
 

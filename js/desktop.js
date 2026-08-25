@@ -15,6 +15,7 @@ export function buildDesktop(desktopEl, onToolClick, settings = {}) {
 
   const search = searchWrap.querySelector(".desktop-search");
   const favs = settings.favorites || [];
+  let iconIndex = 0;
 
   function launchTool(tool, btn) {
     grid.querySelectorAll(".desktop-icon").forEach((i) => i.classList.remove("selected", "launching"));
@@ -28,10 +29,11 @@ export function buildDesktop(desktopEl, onToolClick, settings = {}) {
   function renderIcon(tool, catId, icons) {
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = `desktop-icon ${tool.mode}`;
+    btn.className = `desktop-icon cat-${catId} ${tool.mode}`;
     btn.dataset.cmd = tool.cmd;
+    btn.style.setProperty("--icon-i", iconIndex++);
     btn.innerHTML = `
-      <span class="icon-box">${getToolIcon(tool.cmd, catId)}</span>
+      <span class="icon-box"><span class="icon-shine"></span>${getToolIcon(tool.cmd, catId)}</span>
       <span class="icon-name">${tool.title}</span>
     `;
     btn.title = `${tool.desc}\nClick to run · Right-click to favorite`;
@@ -45,6 +47,7 @@ export function buildDesktop(desktopEl, onToolClick, settings = {}) {
 
   function render(filter = "") {
     grid.innerHTML = "";
+    iconIndex = 0;
     const q = filter.toLowerCase();
 
     if (favs.length && !q) {
@@ -55,6 +58,7 @@ export function buildDesktop(desktopEl, onToolClick, settings = {}) {
       if (favTools.length) {
         const section = document.createElement("div");
         section.className = "desktop-folder favorites-folder";
+        section.style.setProperty("--folder-i", grid.children.length);
         section.innerHTML = `<div class="folder-label" style="--fc:#ffd43b"><span class="folder-icon">⭐</span><span>Favorites</span></div>`;
         const icons = document.createElement("div");
         icons.className = "folder-icons";
@@ -72,6 +76,7 @@ export function buildDesktop(desktopEl, onToolClick, settings = {}) {
 
       const section = document.createElement("div");
       section.className = "desktop-folder";
+      section.style.setProperty("--folder-i", grid.children.length);
       section.innerHTML = `
         <div class="folder-label" style="--fc:${CATEGORY_COLORS[cat.id]}">
           <span class="folder-icon">${cat.icon}</span>

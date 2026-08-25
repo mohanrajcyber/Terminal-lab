@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>EduShell OS — Mohan Raj</title>
+  <meta name="description" content="EduShell OS — Browser-based Cyber Security learning platform for students. Linux & Windows terminal, CTF, games, security tools." />
+  <meta name="author" content="Mohan Raj — Cyber Security Analyst / AI·ML" />
+  <meta name="theme-color" content="#0d1117" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="apple-touch-icon" href="favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/terminal.css" />
+</head>
+<body>
+  <!-- Boot Splash -->
+  <div id="boot-splash">
+    <div class="boot-bg-grid"></div>
+    <div class="boot-scanline"></div>
+    <div class="boot-glow boot-glow-1"></div>
+    <div class="boot-glow boot-glow-2"></div>
+    <div class="boot-content">
+      <div class="boot-logo-wrap">
+        <div class="boot-ring boot-ring-outer"></div>
+        <div class="boot-ring boot-ring-inner"></div>
+        <div class="boot-shield">🛡</div>
+        <div class="boot-logo">
+          <span class="logo-edu">EduShell</span><span class="logo-os">OS</span>
+        </div>
+      </div>
+      <div class="boot-tagline"><span class="tag-char">Cyber Security Learning Platform</span></div>
+      <div class="boot-progress-wrap">
+        <div class="boot-progress">
+          <div class="boot-progress-bar"></div>
+          <div class="boot-progress-shine"></div>
+        </div>
+        <span class="boot-percent">0%</span>
+      </div>
+      <div class="boot-status">
+        <span class="boot-status-text">Initializing kernel...</span><span class="boot-cursor">▌</span>
+      </div>
+      <div class="boot-credit">
+        <div class="credit-line"></div>
+        <div class="credit-label">Created by</div>
+        <div class="credit-hero">Mohan Raj</div>
+        <div class="credit-role">
+          <span class="role-pill">🛡 Cyber Security Analyst</span>
+          <span class="role-pill role-ai">⚡ AI · ML</span>
+        </div>
+        <div class="credit-badge">SECURE BOOT · v2.0</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="desktop">
+    <div class="desktop-wallpaper"></div>
+    <div id="desktop-icons"></div>
+
+    <div id="app" class="terminal-window" data-term="1">
+      <header class="titlebar" id="titlebar">
+        <div class="titlebar-left">
+          <span class="dot red" id="btn-close" title="Minimize"></span>
+          <span class="dot yellow" id="btn-minimize" title="Minimize"></span>
+          <span class="dot green" id="btn-maximize" title="Maximize"></span>
+          <span class="title">EduShell Terminal</span>
+        </div>
+        <div class="titlebar-right">
+          <button type="button" id="btn-linux" class="mode-btn active">Linux</button>
+          <button type="button" id="btn-windows" class="mode-btn">Windows</button>
+          <button type="button" id="btn-clear" class="mode-btn">Clear</button>
+        </div>
+      </header>
+      <main id="terminal" class="terminal" tabindex="0">
+        <div id="output" class="output"></div>
+        <div class="input-line">
+          <span id="prompt" class="prompt">student@edushell:~$ </span>
+          <span id="typed" class="typed"></span><span class="cursor">█</span>
+        </div>
+      </main>
+      <footer class="statusbar">
+        <span id="status-mode">Mode: Linux (bash)</span>
+        <span id="status-path">/home/student</span>
+      </footer>
+      <input id="hidden-input" type="text" autocomplete="off" spellcheck="false" tabindex="-1" />
+      <div id="resize-handle" class="resize-handle"></div>
+    </div>
+
+    <div id="app2" class="terminal-window minimized" data-term="2" style="left:60%;top:15%;width:500px;height:360px;">
+      <header class="titlebar titlebar-2">
+        <div class="titlebar-left">
+          <span class="dot red btn-close-2"></span>
+          <span class="dot yellow btn-minimize-2"></span>
+          <span class="dot green"></span>
+          <span class="title">Terminal 2</span>
+        </div>
+      </header>
+      <main id="terminal2" class="terminal">
+        <div id="output2" class="output"></div>
+        <div class="input-line">
+          <span id="prompt2" class="prompt">student@edushell:~$ </span>
+          <span id="typed2" class="typed"></span><span class="cursor">█</span>
+        </div>
+      </main>
+      <input id="hidden-input-2" type="text" autocomplete="off" spellcheck="false" tabindex="-1" />
+    </div>
+
+    <footer id="taskbar">
+      <button type="button" id="start-btn" class="taskbar-start">⊞ Start</button>
+      <button type="button" id="taskbar-terminal" class="taskbar-btn active">⌨ Terminal</button>
+      <button type="button" id="taskbar-terminal2" class="taskbar-btn">⌨ Terminal 2</button>
+      <button type="button" id="taskbar-linux" class="taskbar-btn">Linux</button>
+      <button type="button" id="taskbar-windows" class="taskbar-btn">Windows</button>
+      <span class="taskbar-spacer"></span>
+      <span id="taskbar-hint">Click icon · Start menu · Notifications top-right</span>
+      <span id="taskbar-clock">12:00</span>
+    </footer>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

@@ -12,6 +12,7 @@ const SITE_URL = "https://mohanrajcyber.github.io/Terminal-lab/";
 const SIGNATURE_PATH = "assets/signature.png";
 
 let signatureLoadPromise = null;
+let processedSignatureCache = null;
 
 function loadSignatureImage() {
   if (!signatureLoadPromise) {
@@ -25,20 +26,47 @@ function loadSignatureImage() {
   return signatureLoadPromise;
 }
 
+/** Extract crisp white signature from black background */
+function processSignatureImage(img) {
+  if (processedSignatureCache) return processedSignatureCache;
+
+  const off = document.createElement("canvas");
+  off.width = img.width;
+  off.height = img.height;
+  const octx = off.getContext("2d");
+  octx.drawImage(img, 0, 0);
+
+  const data = octx.getImageData(0, 0, off.width, off.height);
+  for (let i = 0; i < data.data.length; i += 4) {
+    const lum = data.data[i] * 0.299 + data.data[i + 1] * 0.587 + data.data[i + 2] * 0.114;
+    if (lum < 45) {
+      data.data[i + 3] = 0;
+    } else {
+      data.data[i] = 255;
+      data.data[i + 1] = 255;
+      data.data[i + 2] = 255;
+      data.data[i + 3] = lum > 200 ? 255 : Math.round(((lum - 45) / 155) * 255);
+    }
+  }
+  octx.putImageData(data, 0, 0);
+  processedSignatureCache = off;
+  return off;
+}
+
 function drawSignatureImage(ctx, img, left, top, width) {
-  const maxW = width - 56;
-  const maxH = 58;
-  const scale = Math.min(maxW / img.width, maxH / img.height);
-  const w = img.width * scale;
-  const h = img.height * scale;
-  const x = left + 22;
-  const y = top + 28;
+  const processed = processSignatureImage(img);
+  const maxW = width - 36;
+  const maxH = 78;
+  const scale = Math.min(maxW / processed.width, maxH / processed.height);
+  const w = Math.round(processed.width * scale);
+  const h = Math.round(processed.height * scale);
+  const x = Math.round(left + 18);
+  const y = Math.round(top + 24);
 
   ctx.save();
-  ctx.shadowColor = "rgba(212, 175, 55, 0.4)";
-  ctx.shadowBlur = 10;
-  ctx.globalCompositeOperation = "screen";
-  ctx.drawImage(img, x, y, w, h);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(processed, x, y, w, h);
   ctx.restore();
 }
 

@@ -13,10 +13,13 @@ const SITE_URL = "https://mohanrajcyber.github.io/Terminal-lab/";
 async function loadFonts() {
   if (!document.fonts) return;
   try {
-    await Promise.all([
-      document.fonts.load('700 48px "Cinzel"'),
-      document.fonts.load('400 48px "Cinzel"'),
-      document.fonts.load('400 72px "Great Vibes"'),
+    await Promise.race([
+      Promise.all([
+        document.fonts.load('700 48px "Cinzel"'),
+        document.fonts.load('400 48px "Cinzel"'),
+        document.fonts.load('400 72px "Great Vibes"'),
+      ]),
+      new Promise((r) => setTimeout(r, 2500)),
     ]);
   } catch { /* fonts optional fallback */ }
 }
@@ -211,8 +214,9 @@ export async function buildCertificatePreview(settings, { official = false } = {
 }
 
 export async function openCertificatePreview(settings) {
-  const eligible = isCertificateEligible();
-  const { dataUrl, name } = await buildCertificatePreview(settings, { official: eligible });
+  try {
+    const eligible = isCertificateEligible();
+    const { dataUrl, name } = await buildCertificatePreview(settings, { official: eligible });
 
   let overlay = document.getElementById("cert-preview-overlay");
   if (overlay) overlay.remove();
@@ -267,6 +271,10 @@ export async function openCertificatePreview(settings) {
   });
 
   return overlay;
+  } catch (err) {
+    console.error("Certificate preview failed:", err);
+    return { error: err.message || "Preview failed" };
+  }
 }
 
 export function getCertificateStatus(settings) {
@@ -362,8 +370,11 @@ export function formatCertificatePanelHTML(settings) {
 
   return `
     <div class="cert-panel locked">
+      <div class="cert-actions cert-actions-top">
+        <button type="button" class="cert-btn primary cert-preview-main" id="cert-preview">👁 Preview Certificate — Click Here</button>
+      </div>
       <h3>🎓 Certificate of Completion</h3>
-      <p>Complete the program to unlock your professional certificate.</p>
+      <p>Preview anytime! Complete program to download official copy.</p>
       <ul class="cert-checklist">
         <li class="${(p.missionsCompleted?.length || 0) >= 5 ? "done" : ""}">
           ${(p.missionsCompleted?.length || 0) >= 5 ? "✓" : "○"} All 5 Missions (${p.missionsCompleted?.length || 0}/5)
@@ -373,17 +384,17 @@ export function formatCertificatePanelHTML(settings) {
         <li class="${(p.commandsRun || 0) >= 30 ? "done" : ""}">${(p.commandsRun || 0) >= 30 ? "✓" : "○"} 30 Commands (${p.commandsRun || 0})</li>
       </ul>
       <p class="cert-hint">Need: All missions + any ONE learning requirement above.</p>
-      <div class="cert-actions">
-        <button type="button" class="cert-btn primary" id="cert-preview">👁 Preview Certificate</button>
-      </div>
     </div>`;
 }
 
 export function initCertificatePanel(win, settings, onNotify) {
-  win.querySelector("#cert-preview")?.addEventListener("click", async () => {
-    await openCertificatePreview(settings);
-    onNotify?.("Certificate", "Preview opened — scroll to see full design", "info");
-  });
+  const openPreview = async () => {
+    const r = await openCertificatePreview(settings);
+    if (r?.error) onNotify?.("Certificate", r.error, "warning");
+    else onNotify?.("Certificate", "Preview opened!", "info");
+  };
+
+  win.querySelector("#cert-preview")?.addEventListener("click", openPreview);
   win.querySelector("#cert-png")?.addEventListener("click", async () => {
     const r = await downloadCertificatePNG(settings);
     if (r.ok) onNotify?.("Certificate", "PNG downloaded! Add to LinkedIn/resume.", "success");

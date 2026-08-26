@@ -24,6 +24,10 @@ function makeWindow(id, title, contentHtml, w = 520, h = 420) {
   if (win) {
     win.classList.remove("minimized");
     win.style.zIndex = 60;
+    const body = win.querySelector(".app-win-body");
+    if (body) body.innerHTML = contentHtml;
+    const titleEl = win.querySelector(".app-win-title");
+    if (titleEl) titleEl.textContent = title;
     return win;
   }
   win = document.createElement("div");
@@ -353,11 +357,22 @@ export function openProgress(settings) {
       win.querySelectorAll(".hub-panel").forEach((p) => p.classList.remove("active"));
       tab.classList.add("active");
       win.querySelector(`[data-panel="${tab.dataset.tab}"]`)?.classList.add("active");
+      if (tab.dataset.tab === "cert") {
+        setTimeout(() => win.querySelector("#cert-preview")?.click(), 200);
+      }
     });
   });
 
   initCertificatePanel(win, settings, (t, m, ty) => notify(t, m, ty));
   initSharePanel(win, settings, (t, m, ty) => notify(t, m, ty));
+
+  setTimeout(() => {
+    const certTab = win.querySelector('[data-tab="cert"]');
+    if (certTab?.classList.contains("active")) {
+      win.querySelector("#cert-preview")?.click();
+    }
+  }, 300);
+
   return win;
 }
 

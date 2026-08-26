@@ -9,6 +9,50 @@ import {
 import { getUnlockedBadges } from "./badges.js";
 
 const SITE_URL = "https://mohanrajcyber.github.io/Terminal-lab/";
+const SIGNATURE_PATH = "assets/signature.png";
+
+let signatureLoadPromise = null;
+
+function loadSignatureImage() {
+  if (!signatureLoadPromise) {
+    signatureLoadPromise = new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      img.src = SIGNATURE_PATH;
+    });
+  }
+  return signatureLoadPromise;
+}
+
+function drawSignatureImage(ctx, img, left, top, width) {
+  const maxW = width - 56;
+  const maxH = 58;
+  const scale = Math.min(maxW / img.width, maxH / img.height);
+  const w = img.width * scale;
+  const h = img.height * scale;
+  const x = left + 22;
+  const y = top + 28;
+
+  ctx.save();
+  ctx.shadowColor = "rgba(212, 175, 55, 0.4)";
+  ctx.shadowBlur = 10;
+  ctx.globalCompositeOperation = "screen";
+  ctx.drawImage(img, x, y, w, h);
+  ctx.restore();
+}
+
+function drawFallbackSignature(ctx, left, top, width) {
+  drawInkSignature(ctx, left + 28, top + 38);
+  ctx.save();
+  ctx.translate(left + 24, top + 72);
+  ctx.rotate(-0.035);
+  ctx.fillStyle = "rgba(255,255,255,0.97)";
+  ctx.font = '400 48px "Pinyon Script", "Great Vibes", cursive';
+  ctx.textAlign = "left";
+  ctx.fillText("Mohan Raj", 0, 0);
+  ctx.restore();
+}
 
 async function loadFonts() {
   if (!document.fonts) return;
@@ -260,7 +304,7 @@ function drawInkSignature(ctx, x, y) {
   ctx.restore();
 }
 
-function drawAuthorSignatureBlock(ctx, left, top, width) {
+function drawAuthorSignatureBlock(ctx, left, top, width, sigImg) {
   ctx.fillStyle = "rgba(255, 255, 255, 0.04)";
   ctx.strokeStyle = "rgba(212, 175, 55, 0.32)";
   ctx.lineWidth = 1;
@@ -275,19 +319,9 @@ function drawAuthorSignatureBlock(ctx, left, top, width) {
   ctx.fillText("AUTHORIZED SIGNATORY", left + 18, top + 22);
 
   drawInitialsStamp(ctx, left + width - 34, top + 34);
-  drawInkSignature(ctx, left + 28, top + 38);
 
-  ctx.save();
-  ctx.translate(left + 24, top + 72);
-  ctx.rotate(-0.035);
-  ctx.fillStyle = "rgba(255,255,255,0.97)";
-  ctx.font = '400 48px "Pinyon Script", "Great Vibes", cursive';
-  ctx.textAlign = "left";
-  ctx.shadowColor = "rgba(0,0,0,0.25)";
-  ctx.shadowBlur = 4;
-  ctx.shadowOffsetY = 2;
-  ctx.fillText("Mohan Raj", 0, 0);
-  ctx.restore();
+  if (sigImg) drawSignatureImage(ctx, sigImg, left, top, width);
+  else drawFallbackSignature(ctx, left, top, width);
 
   const lineY = top + 88;
   const g = ctx.createLinearGradient(left + 18, lineY, left + width - 18, lineY);
@@ -360,6 +394,7 @@ function drawDateBlock(ctx, right, top, width, dateStr) {
 export async function drawCertificateCanvas(name, certId, dateStr, options = {}) {
   const { watermark = "" } = options;
   await loadFonts();
+  const sigImg = await loadSignatureImage();
 
   const W = 1600;
   const H = 1130;
@@ -449,7 +484,7 @@ export async function drawCertificateCanvas(name, certId, dateStr, options = {})
   drawGoldDivider(ctx, W / 2, 615, 600);
   drawSeal(ctx, W / 2, 710, 62);
 
-  drawAuthorSignatureBlock(ctx, 140, 800, 420);
+  drawAuthorSignatureBlock(ctx, 140, 800, 420, sigImg);
   drawDateBlock(ctx, W - 140, 800, 420, dateStr);
 
   ctx.textAlign = "center";

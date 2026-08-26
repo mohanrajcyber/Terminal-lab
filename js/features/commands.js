@@ -419,6 +419,7 @@ export const featureCommands = {
   filemanager: () => [{ special: "open-filemanager" }],
   recyclebin: () => [{ special: "open-recyclebin" }],
   progress: () => [{ special: "open-progress" }],
+  certificate: () => [{ special: "open-certificate-preview" }],
   missions: () => [{ special: "open-missions" }],
   badges: () => [{ special: "open-badges" }],
   leaderboard: () => [{ special: "open-leaderboard" }],

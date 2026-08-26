@@ -13,7 +13,7 @@ import { runBoot } from "./boot.js";
 import { notify, setLastReport, exportReport } from "./notify.js";
 import { sounds, setSoundEnabled } from "./sounds.js";
 import { loadSettings, applySettings, saveSettings, toggleFavorite } from "./settings.js";
-import { openSettings, openFileManager, openRecycleBin, openStartMenu, openProgress, openLeaderboard, openHelp, openSecurityDemos, openCtfLab, openMissions, openBadges } from "./os-apps.js";
+import { openSettings, openFileManager, openRecycleBin, openStartMenu, openProgress, openLeaderboard, openHelp, openSecurityDemos, openCtfLab, openMissions, openBadges, openCertificatePreviewApp } from "./os-apps.js";
 import { isGameCmd, openGameTerminal } from "./game-terminal.js";
 import { getAiReply, getChatWelcome, resetChatHistory, isCasualMessage } from "./ai-chat.js";
 import { startCtf, startCtfMenu, checkCtfAnswer, clearCtf, formatCtfMenu, getCtfState, CTF_CHALLENGES } from "./ctf.js";
@@ -583,6 +583,7 @@ async function processSpecial(r) {
     "open-securitydemo": () => openSecurityDemos(),
     "open-missions": () => openMissions(),
     "open-badges": () => openBadges(),
+    "open-certificate-preview": () => openCertificatePreviewApp(settings),
   };
   if (map[r.special]) { map[r.special](); return true; }
   return false;

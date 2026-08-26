@@ -7,7 +7,6 @@ import {
   loadProgress,
 } from "./progress.js";
 import { getUnlockedBadges } from "./badges.js";
-import { MISSIONS } from "./missions.js";
 
 const SITE_URL = "https://mohanrajcyber.github.io/Terminal-lab/";
 
@@ -41,7 +40,8 @@ function drawOrnament(ctx, x, y, size, flip) {
   ctx.restore();
 }
 
-export async function drawCertificateCanvas(name, certId, dateStr) {
+export async function drawCertificateCanvas(name, certId, dateStr, options = {}) {
+  const { watermark = "" } = options;
   await loadFonts();
 
   const W = 1400;
@@ -169,7 +169,104 @@ export async function drawCertificateCanvas(name, certId, dateStr) {
   ctx.fillStyle = "rgba(201, 162, 39, 0.7)";
   ctx.fillText("Authorized for portfolio · LinkedIn · Resume · Job Applications", W / 2, 930);
 
+  if (watermark) {
+    ctx.save();
+    ctx.translate(W / 2, H / 2);
+    ctx.rotate(-0.35);
+    ctx.font = '700 72px "Cinzel", Georgia, serif';
+    ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
+    ctx.textAlign = "center";
+    ctx.fillText(watermark, 0, 0);
+    ctx.restore();
+    ctx.fillStyle = "rgba(255, 212, 59, 0.85)";
+    ctx.font = "600 14px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("PREVIEW — Complete missions to download official certificate", W / 2, 960);
+  }
+
   return canvas;
+}
+
+function formatCertName(settings) {
+  const raw = settings?.username || "Student";
+  if (raw === "student") return "Your Name";
+  return raw.charAt(0).toUpperCase() + raw.slice(1);
+}
+
+export async function buildCertificatePreview(settings, { official = false } = {}) {
+  const name = formatCertName(settings);
+  const certId = official && loadProgress().certificateIssued
+    ? loadProgress().certificateIssued
+    : generateCertId(name);
+  const dateStr = new Date().toLocaleDateString("en-IN", {
+    day: "numeric", month: "long", year: "numeric",
+  });
+  const canvas = await drawCertificateCanvas(
+    name,
+    certId,
+    dateStr,
+    { watermark: official ? "" : "PREVIEW" }
+  );
+  return { canvas, dataUrl: canvas.toDataURL("image/png", 1.0), name, certId, dateStr };
+}
+
+export async function openCertificatePreview(settings) {
+  const eligible = isCertificateEligible();
+  const { dataUrl, name } = await buildCertificatePreview(settings, { official: eligible });
+
+  let overlay = document.getElementById("cert-preview-overlay");
+  if (overlay) overlay.remove();
+
+  overlay = document.createElement("div");
+  overlay.id = "cert-preview-overlay";
+  overlay.className = "cert-preview-overlay";
+  overlay.innerHTML = `
+    <div class="cert-preview-backdrop"></div>
+    <div class="cert-preview-dialog">
+      <header class="cert-preview-header">
+        <div>
+          <strong>🎓 Certificate Preview</strong>
+          <span>${eligible ? "Official — ready to download" : "Sample preview with your name"}</span>
+        </div>
+        <button type="button" class="cert-preview-close" aria-label="Close">×</button>
+      </header>
+      <div class="cert-preview-body">
+        <img src="${dataUrl}" alt="EduShell Certificate for ${name}" class="cert-preview-img" />
+      </div>
+      <footer class="cert-preview-footer">
+        ${eligible
+          ? `<button type="button" class="cert-btn primary" id="cert-prev-png">⬇ Download PNG</button>
+             <button type="button" class="cert-btn" id="cert-prev-pdf">🖨 Save as PDF</button>`
+          : `<p class="cert-preview-note">Complete all 5 missions + learning goal to unlock download.</p>
+             <button type="button" class="cert-btn" id="cert-prev-missions">🛡 View Missions</button>`}
+        <button type="button" class="cert-btn" id="cert-prev-close">Close</button>
+      </footer>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+  requestAnimationFrame(() => overlay.classList.add("visible"));
+
+  const close = () => {
+    overlay.classList.remove("visible");
+    setTimeout(() => overlay.remove(), 250);
+  };
+
+  overlay.querySelector(".cert-preview-backdrop")?.addEventListener("click", close);
+  overlay.querySelector(".cert-preview-close")?.addEventListener("click", close);
+  overlay.querySelector("#cert-prev-close")?.addEventListener("click", close);
+  overlay.querySelector("#cert-prev-png")?.addEventListener("click", async () => {
+    await downloadCertificatePNG(settings);
+  });
+  overlay.querySelector("#cert-prev-pdf")?.addEventListener("click", async () => {
+    await downloadCertificatePDF(settings);
+  });
+  overlay.querySelector("#cert-prev-missions")?.addEventListener("click", () => {
+    close();
+    import("./os-apps.js").then(({ openMissions }) => openMissions());
+  });
+
+  return overlay;
 }
 
 export function getCertificateStatus(settings) {
@@ -256,6 +353,7 @@ export function formatCertificatePanelHTML(settings) {
         </ul>
         <p class="cert-note">Use for LinkedIn, resume, portfolio & job applications.</p>
         <div class="cert-actions">
+          <button type="button" class="cert-btn" id="cert-preview">👁 Preview Certificate</button>
           <button type="button" class="cert-btn primary" id="cert-png">⬇ Download PNG</button>
           <button type="button" class="cert-btn" id="cert-pdf">🖨 Save as PDF</button>
         </div>
@@ -275,10 +373,17 @@ export function formatCertificatePanelHTML(settings) {
         <li class="${(p.commandsRun || 0) >= 30 ? "done" : ""}">${(p.commandsRun || 0) >= 30 ? "✓" : "○"} 30 Commands (${p.commandsRun || 0})</li>
       </ul>
       <p class="cert-hint">Need: All missions + any ONE learning requirement above.</p>
+      <div class="cert-actions">
+        <button type="button" class="cert-btn primary" id="cert-preview">👁 Preview Certificate</button>
+      </div>
     </div>`;
 }
 
 export function initCertificatePanel(win, settings, onNotify) {
+  win.querySelector("#cert-preview")?.addEventListener("click", async () => {
+    await openCertificatePreview(settings);
+    onNotify?.("Certificate", "Preview opened — scroll to see full design", "info");
+  });
   win.querySelector("#cert-png")?.addEventListener("click", async () => {
     const r = await downloadCertificatePNG(settings);
     if (r.ok) onNotify?.("Certificate", "PNG downloaded! Add to LinkedIn/resume.", "success");

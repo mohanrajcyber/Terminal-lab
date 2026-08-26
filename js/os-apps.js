@@ -10,7 +10,7 @@ import { formatLeaderboardHTML } from "./leaderboard.js";
 import { CTF_CHALLENGES } from "./ctf.js";
 import { formatBadgesHTML, calculateXP, getLevelFromXP } from "./badges.js";
 import { formatMissionsHTML, getMissionIntro } from "./missions.js";
-import { formatCertificatePanelHTML, initCertificatePanel } from "./certificate.js";
+import { formatCertificatePanelHTML, initCertificatePanel, openCertificatePreview } from "./certificate.js";
 import { formatSharePanelHTML, initSharePanel } from "./share-card.js";
 import {
   getPhishingDemoHTML, getDarkWebDemoHTML, getVideoDemoHTML,
@@ -359,6 +359,11 @@ export function openProgress(settings) {
   initCertificatePanel(win, settings, (t, m, ty) => notify(t, m, ty));
   initSharePanel(win, settings, (t, m, ty) => notify(t, m, ty));
   return win;
+}
+
+export function openCertificatePreviewApp(settings) {
+  sounds.click();
+  return openCertificatePreview(settings);
 }
 
 export function openMissions() {

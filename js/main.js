@@ -13,11 +13,13 @@ import { runBoot } from "./boot.js";
 import { notify, setLastReport, exportReport } from "./notify.js";
 import { sounds, setSoundEnabled } from "./sounds.js";
 import { loadSettings, applySettings, saveSettings, toggleFavorite } from "./settings.js";
-import { openSettings, openFileManager, openRecycleBin, openStartMenu, openProgress, openLeaderboard, openHelp, openSecurityDemos, openCtfLab } from "./os-apps.js";
+import { openSettings, openFileManager, openRecycleBin, openStartMenu, openProgress, openLeaderboard, openHelp, openSecurityDemos, openCtfLab, openMissions, openBadges } from "./os-apps.js";
 import { isGameCmd, openGameTerminal } from "./game-terminal.js";
 import { getAiReply, getChatWelcome, resetChatHistory, isCasualMessage } from "./ai-chat.js";
 import { startCtf, startCtfMenu, checkCtfAnswer, clearCtf, formatCtfMenu, getCtfState, CTF_CHALLENGES } from "./ctf.js";
-import { trackTool, trackCommand, trackQuizScore, trackCtfComplete, trackScan, trackGame } from "./progress.js";
+import { trackTool, trackCommand, trackQuizScore, trackCtfComplete, trackScan, trackGame, trackDailyVisit } from "./progress.js";
+import { evaluateBadges } from "./badges.js";
+import { onMissionAction } from "./missions.js";
 import { addScore } from "./leaderboard.js";
 import { runTutorial, shouldShowTutorial, openHelpOverlay } from "./tutorial.js";
 import { loadProgress } from "./progress.js";
@@ -265,6 +267,7 @@ function finishQuiz() {
     appendLine(line, line.includes("QUIZ") || line.startsWith("═") ? "info" : "ok");
   });
   notify("Quiz Complete", `Score ${pct}% — saved to leaderboard!`, pct >= 60 ? "success" : "warning");
+  handleGamification({ cmd: "quiz", line: "quiz", args: ["quiz"] });
   quizState = null;
 }
 
@@ -367,7 +370,9 @@ async function handleScanInput(rawLine) {
   setLastReport(report);
   trackScan();
   sounds.success();
+  const scanType = scanState.type;
   scanState = null; scanRunning = false;
+  handleGamification({ cmd: scanType === "web" ? "webscan" : "msgcheck", line: rawLine, scanType, args: [scanType] });
 }
 
 async function handlePromptInput(rawLine) {
@@ -383,6 +388,9 @@ async function handlePromptInput(rawLine) {
     printResults(handlers[t](rawLine.trim()));
     notify(`${t} scan`, "Analysis complete", "success");
     sounds.success();
+    if (t === "pass") {
+      handleGamification({ cmd: "passcheck", line: `passcheck ${rawLine.trim()}`, args: ["passcheck", rawLine.trim()] });
+    }
   } else if (t === "practice") {
     appendLine(`Practice '${rawLine}': try it now in terminal!`, "ok");
     appendLine(`Example: ${rawLine} ${shell.mode === "linux" ? "documents" : "Documents"}`, "info");
@@ -476,6 +484,26 @@ function beginCtfChallenge(challengeNum) {
   focusInput();
 }
 
+function handleGamification(ctx) {
+  const missionResult = onMissionAction(ctx);
+  if (missionResult) {
+    notify("Mission Complete!", `${missionResult.mission.title} — Great work, Analyst!`, "success");
+    sounds.success();
+    appendLine(`🎖 MISSION ${missionResult.mission.num} COMPLETE: ${missionResult.mission.title}!`, "ok");
+    for (const b of missionResult.badges || []) {
+      appendLine(`🏅 Badge Unlocked: ${b.emoji} ${b.title}!`, "info");
+    }
+  }
+
+  const shown = new Set((missionResult?.badges || []).map((b) => b.id));
+  for (const b of evaluateBadges()) {
+    if (shown.has(b.id)) continue;
+    notify("Badge Unlocked!", `${b.emoji} ${b.title}`, "success");
+    appendLine(`🏅 Badge Unlocked: ${b.emoji} ${b.title}!`, "info");
+    sounds.success();
+  }
+}
+
 function onCtfSuccess(result) {
   const flags = trackCtfComplete(ctfActive.id);
   addScore(settings.username, "CTF", result.points, ctfActive.title);
@@ -483,6 +511,7 @@ function onCtfSuccess(result) {
   appendLine(`+${result.points} points · Total flags: ${flags}`, "ok");
   notify("CTF", `Flag captured! ${ctfActive.title}`, "success");
   sounds.success();
+  handleGamification({ cmd: "ctf", line: result.flag, args: ["ctf"] });
   ctfActive = null;
   clearCtf();
 }
@@ -509,6 +538,7 @@ async function handleCtfLine(rawLine) {
   if (result?.correct) onCtfSuccess(result);
   else if (result?.showHint) appendLine(`Hint: ${result.hint}`, "warning");
   else if (/^flag\s|^edu\{/i.test(line)) appendLine("Wrong flag — try again!", "err");
+  handleGamification({ cmd: args[0]?.toLowerCase(), line, args });
   updateUI();
 }
 
@@ -547,10 +577,12 @@ async function processSpecial(r) {
       appendLine(`Hint: ${ch.hint}`, "info");
       restoreTerminal();
     },
-    "open-progress": () => openProgress(),
+    "open-progress": () => openProgress(settings),
     "open-leaderboard": () => openLeaderboard(settings),
     "open-help": () => openHelp(),
     "open-securitydemo": () => openSecurityDemos(),
+    "open-missions": () => openMissions(),
+    "open-badges": () => openBadges(),
   };
   if (map[r.special]) { map[r.special](); return true; }
   return false;
@@ -601,6 +633,8 @@ async function executeCommand(rawLine) {
     if (await processSpecial(r)) continue;
     printResults([r]);
   }
+
+  handleGamification({ cmd: cmdName, line, args: parseArgs(line) });
   updateUI();
 }
 
@@ -678,7 +712,9 @@ function launchTool(tool) {
   if (tool.app === "settings") { openSettings(settings, shell, onSettingsUpdate); return; }
   if (tool.app === "filemanager") { openFileManager(shell, (t, m, ty) => notify(t, m, ty)); return; }
   if (tool.app === "recyclebin") { openRecycleBin(null, (t, m, ty) => notify(t, m, ty)); return; }
-  if (tool.app === "progress") { openProgress(); return; }
+  if (tool.app === "progress") { openProgress(settings); return; }
+  if (tool.app === "missions") { openMissions(); return; }
+  if (tool.app === "badges") { openBadges(); return; }
   if (tool.app === "leaderboard") { openLeaderboard(settings); return; }
   if (tool.app === "help") { openHelp(); return; }
   if (tool.app === "securitydemo") { openSecurityDemos(); return; }
@@ -805,6 +841,8 @@ function initOS() {
   updateUI();
   focusInput();
   sounds.boot();
+  trackDailyVisit();
+  evaluateBadges();
   notify("EduShell OS", `Welcome ${settings.username}! Desktop ready.`, "success");
 
   if (shouldShowTutorial()) {

@@ -73,6 +73,8 @@ const PATHS = {
   recyclebin: '<path d="M16 18h16l-2 14H18z" fill="none" stroke="#fff" stroke-width="2"/><line x1="20" y1="18" x2="20" y2="14" stroke="#fff" stroke-width="2"/><line x1="28" y1="18" x2="28" y2="14" stroke="#fff" stroke-width="2"/>',
   ctf: '<text x="24" y="30" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">CTF</text>',
   progress: '<rect x="14" y="28" width="20" height="4" rx="1" fill="#fff" opacity="0.4"/><rect x="14" y="28" width="14" height="4" rx="1" fill="#fff"/>',
+  missions: '<path d="M24 12l4 8 9 1-6 6 2 9-9-5-9 5 2-9-6-6 9-1z" fill="none" stroke="#fff" stroke-width="2"/>',
+  badges: '<circle cx="24" cy="28" r="10" fill="none" stroke="#fff" stroke-width="2"/><text x="24" y="32" text-anchor="middle" fill="#ffd43b" font-size="12">★</text>',
   leaderboard: '<rect x="14" y="16" width="20" height="18" rx="2" fill="none" stroke="#fff" stroke-width="2"/><text x="24" y="28" text-anchor="middle" fill="#ffd43b" font-size="10">1</text>',
   guide: '<circle cx="24" cy="24" r="10" fill="none" stroke="#fff" stroke-width="2"/><text x="24" y="29" text-anchor="middle" fill="#fff" font-size="14" font-weight="bold">?</text>',
   securitydemo: '<rect x="12" y="18" width="24" height="16" rx="2" fill="none" stroke="#fff" stroke-width="2"/><polygon points="24,22 24,22" fill="#fff"/><polygon points="20,30 24,24 28,30" fill="#fff"/>',

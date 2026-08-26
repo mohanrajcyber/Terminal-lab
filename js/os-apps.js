@@ -4,9 +4,14 @@ import { resolvePath } from "./shell.js";
 import { listRecycleItems, restoreItem, emptyRecycle, addToRecycle } from "./recycle.js";
 import { WALLPAPERS, THEMES, saveSettings, toggleFavorite } from "./settings.js";
 import { sounds } from "./sounds.js";
+import { notify } from "./notify.js";
 import { getProgressSummary } from "./progress.js";
 import { formatLeaderboardHTML } from "./leaderboard.js";
 import { CTF_CHALLENGES } from "./ctf.js";
+import { formatBadgesHTML, calculateXP, getLevelFromXP } from "./badges.js";
+import { formatMissionsHTML, getMissionIntro } from "./missions.js";
+import { formatCertificatePanelHTML, initCertificatePanel } from "./certificate.js";
+import { formatSharePanelHTML, initSharePanel } from "./share-card.js";
 import {
   getPhishingDemoHTML, getDarkWebDemoHTML, getVideoDemoHTML,
   initPhishingDemo, initDarkWebDemo, initVideoDemos,
@@ -290,22 +295,98 @@ export function pinFavorite(cmd, settings, onUpdate) {
   sounds.notify();
 }
 
-export function openProgress() {
+export function openProgress(settings) {
   sounds.click();
   const p = getProgressSummary();
-  const win = makeWindow("win-progress", "📊 My Progress", `
-    <div class="progress-panel">
-      <div class="prog-level">Level: <strong>${p.level}</strong></div>
-      <div class="prog-stat"><span>Tools Used</span><strong>${p.toolCount} (${p.toolPercent}%)</strong></div>
-      <div class="prog-bar"><div class="prog-fill" style="width:${p.toolPercent}%"></div></div>
-      <div class="prog-stat"><span>Commands Run</span><strong>${p.commandsRun}</strong></div>
-      <div class="prog-stat"><span>Quiz Best Score</span><strong>${p.quizBest}%</strong></div>
-      <div class="prog-stat"><span>CTF Flags</span><strong>${p.ctfFlags} / ${CTF_CHALLENGES.length}</strong></div>
-      <div class="prog-stat"><span>Security Scans</span><strong>${p.scansDone}</strong></div>
-      <div class="prog-stat"><span>Games Played</span><strong>${p.gamesPlayed}</strong></div>
-      <p class="prog-hint">Keep exploring tools to level up!</p>
+  const xp = calculateXP(p);
+  const xpLevel = getLevelFromXP(xp);
+  const badgeCount = (p.badgesUnlocked || []).length;
+  const missionCount = (p.missionsCompleted || []).length;
+
+  const win = makeWindow("win-progress", "📊 My Progress & Achievements", `
+    <div class="progress-hub">
+      <div class="prog-xp-banner">
+        <div class="prog-xp-score">${xp} <span>XP</span></div>
+        <div class="prog-xp-meta">
+          <strong>${xpLevel}</strong>
+          <span>${badgeCount} badges · ${missionCount}/5 missions</span>
+        </div>
+      </div>
+      <div class="hub-tabs">
+        <button type="button" class="hub-tab active" data-tab="stats">Stats</button>
+        <button type="button" class="hub-tab" data-tab="badges">🏅 Badges</button>
+        <button type="button" class="hub-tab" data-tab="missions">🛡 Missions</button>
+        <button type="button" class="hub-tab" data-tab="cert">🎓 Certificate</button>
+        <button type="button" class="hub-tab" data-tab="share">📱 Share</button>
+      </div>
+      <div class="hub-panels">
+        <div class="hub-panel active" data-panel="stats">
+          <div class="progress-panel">
+            <div class="prog-level">Level: <strong>${p.level}</strong></div>
+            <div class="prog-stat"><span>Tools Used</span><strong>${p.toolCount} (${p.toolPercent}%)</strong></div>
+            <div class="prog-bar"><div class="prog-fill" style="width:${p.toolPercent}%"></div></div>
+            <div class="prog-stat"><span>Commands Run</span><strong>${p.commandsRun}</strong></div>
+            <div class="prog-stat"><span>Quiz Best Score</span><strong>${p.quizBest}%</strong></div>
+            <div class="prog-stat"><span>CTF Flags</span><strong>${p.ctfFlags} / ${CTF_CHALLENGES.length}</strong></div>
+            <div class="prog-stat"><span>Security Scans</span><strong>${p.scansDone}</strong></div>
+            <div class="prog-stat"><span>🔥 Day Streak</span><strong>${p.streak || 0} days</strong></div>
+            <div class="prog-stat"><span>Games Played</span><strong>${p.gamesPlayed}</strong></div>
+          </div>
+        </div>
+        <div class="hub-panel" data-panel="badges">
+          <p class="hub-intro">Unlock badges by exploring EduShell OS!</p>
+          <div class="badges-grid">${formatBadgesHTML()}</div>
+        </div>
+        <div class="hub-panel" data-panel="missions">
+          <p class="hub-intro">You are a Cyber Security Analyst — complete 5 missions in the terminal!</p>
+          <div class="missions-list">${formatMissionsHTML()}</div>
+        </div>
+        <div class="hub-panel" data-panel="cert">${formatCertificatePanelHTML(settings)}</div>
+        <div class="hub-panel" data-panel="share">${formatSharePanelHTML(settings)}</div>
+      </div>
     </div>
-  `, 380, 380);
+  `, 520, 520);
+
+  win.querySelectorAll(".hub-tab").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      win.querySelectorAll(".hub-tab").forEach((t) => t.classList.remove("active"));
+      win.querySelectorAll(".hub-panel").forEach((p) => p.classList.remove("active"));
+      tab.classList.add("active");
+      win.querySelector(`[data-panel="${tab.dataset.tab}"]`)?.classList.add("active");
+    });
+  });
+
+  initCertificatePanel(win, settings, (t, m, ty) => notify(t, m, ty));
+  initSharePanel(win, settings, (t, m, ty) => notify(t, m, ty));
+  return win;
+}
+
+export function openMissions() {
+  sounds.click();
+  const intro = getMissionIntro();
+  const win = makeWindow("win-missions", "🛡 Mission Mode", `
+    <div class="missions-hub">
+      <div class="mission-intro-box">${intro.map((l) => `<p>${l}</p>`).join("")}</div>
+      <div class="missions-list">${formatMissionsHTML()}</div>
+      <button type="button" class="mission-start-btn" id="mission-focus-term">⌨ Open Terminal & Start</button>
+    </div>
+  `, 480, 480);
+
+  win.querySelector("#mission-focus-term")?.addEventListener("click", () => {
+    win.remove();
+    document.getElementById("app")?.classList.remove("minimized");
+    document.getElementById("hidden-input")?.focus();
+  });
+  return win;
+}
+
+export function openBadges() {
+  sounds.click();
+  const p = getProgressSummary();
+  const win = makeWindow("win-badges", "🏅 Badges & Achievements", `
+    <p class="hub-intro">${(p.badgesUnlocked || []).length} / 8 badges unlocked · ${p.streak || 0}-day streak</p>
+    <div class="badges-grid">${formatBadgesHTML()}</div>
+  `, 440, 460);
   return win;
 }
 

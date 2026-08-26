@@ -18,6 +18,7 @@ async function loadFonts() {
         document.fonts.load('700 52px "Cinzel"'),
         document.fonts.load('600 24px "Cinzel"'),
         document.fonts.load('400 96px "Great Vibes"'),
+        document.fonts.load('400 52px "Pinyon Script"'),
         document.fonts.load('400 48px "Playfair Display"'),
         document.fonts.load('700 20px "Playfair Display"'),
       ]),
@@ -204,6 +205,158 @@ function drawSkillPills(ctx, skills, cx, startY) {
   });
 }
 
+function drawInitialsStamp(ctx, cx, cy) {
+  ctx.save();
+  ctx.strokeStyle = GOLD;
+  ctx.lineWidth = 2;
+  ctx.fillStyle = "rgba(212, 175, 55, 0.1)";
+  ctx.beginPath();
+  ctx.arc(cx, cy, 22, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = GOLD;
+  ctx.font = '700 13px "Cinzel", serif';
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("MR", cx, cy);
+  ctx.restore();
+}
+
+function drawInkSignature(ctx, x, y) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.88)";
+  ctx.lineWidth = 2.4;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.shadowColor = "rgba(212, 175, 55, 0.35)";
+  ctx.shadowBlur = 6;
+
+  ctx.beginPath();
+  ctx.moveTo(0, 28);
+  ctx.bezierCurveTo(8, 8, 22, 42, 38, 22);
+  ctx.bezierCurveTo(48, 10, 52, 36, 62, 24);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(58, 26);
+  ctx.bezierCurveTo(72, 6, 88, 38, 108, 18);
+  ctx.bezierCurveTo(122, 4, 132, 32, 148, 16);
+  ctx.bezierCurveTo(162, 2, 178, 28, 198, 12);
+  ctx.bezierCurveTo(218, -2, 236, 24, 268, 8);
+  ctx.stroke();
+
+  ctx.strokeStyle = GOLD_LIGHT;
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  ctx.moveTo(-4, 38);
+  ctx.quadraticCurveTo(130, 52, 278, 34);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(200, 8);
+  ctx.bezierCurveTo(230, -6, 255, 18, 272, 4);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawAuthorSignatureBlock(ctx, left, top, width) {
+  ctx.fillStyle = "rgba(255, 255, 255, 0.04)";
+  ctx.strokeStyle = "rgba(212, 175, 55, 0.32)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(left, top, width, 128, 10);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = GOLD;
+  ctx.font = '700 10px "Cinzel", serif';
+  ctx.textAlign = "left";
+  ctx.fillText("AUTHORIZED SIGNATORY", left + 18, top + 22);
+
+  drawInitialsStamp(ctx, left + width - 34, top + 34);
+  drawInkSignature(ctx, left + 28, top + 38);
+
+  ctx.save();
+  ctx.translate(left + 24, top + 72);
+  ctx.rotate(-0.035);
+  ctx.fillStyle = "rgba(255,255,255,0.97)";
+  ctx.font = '400 48px "Pinyon Script", "Great Vibes", cursive';
+  ctx.textAlign = "left";
+  ctx.shadowColor = "rgba(0,0,0,0.25)";
+  ctx.shadowBlur = 4;
+  ctx.shadowOffsetY = 2;
+  ctx.fillText("Mohan Raj", 0, 0);
+  ctx.restore();
+
+  const lineY = top + 88;
+  const g = ctx.createLinearGradient(left + 18, lineY, left + width - 18, lineY);
+  g.addColorStop(0, "transparent");
+  g.addColorStop(0.15, GOLD);
+  g.addColorStop(0.85, GOLD);
+  g.addColorStop(1, "transparent");
+  ctx.strokeStyle = g;
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  ctx.moveTo(left + 18, lineY);
+  ctx.lineTo(left + width - 18, lineY);
+  ctx.stroke();
+
+  ctx.fillStyle = "#ffffff";
+  ctx.font = '700 16px "Cinzel", serif';
+  ctx.textAlign = "left";
+  ctx.fillText("MOHAN RAJ", left + 18, lineY + 22);
+  ctx.fillStyle = "rgba(255,255,255,0.58)";
+  ctx.font = '400 12px "Playfair Display", serif';
+  ctx.fillText("Cyber Security Analyst · AI · ML", left + 18, lineY + 40);
+  ctx.fillText("Creator & Lead Instructor — EduShell OS", left + 18, lineY + 56);
+}
+
+function drawDateBlock(ctx, right, top, width, dateStr) {
+  ctx.fillStyle = "rgba(255, 255, 255, 0.04)";
+  ctx.strokeStyle = "rgba(212, 175, 55, 0.32)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(right - width, top, width, 128, 10);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = GOLD;
+  ctx.font = '700 10px "Cinzel", serif';
+  ctx.textAlign = "right";
+  ctx.fillText("DATE OF COMPLETION", right - 18, top + 22);
+
+  ctx.fillStyle = "rgba(212, 175, 55, 0.15)";
+  ctx.beginPath();
+  ctx.roundRect(right - width + 18, top + 38, width - 36, 44, 6);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(212, 175, 55, 0.35)";
+  ctx.stroke();
+
+  ctx.fillStyle = "#ffffff";
+  ctx.font = '700 20px "Cinzel", serif';
+  ctx.textAlign = "right";
+  ctx.fillText(dateStr.toUpperCase(), right - 28, top + 68);
+
+  const lineY = top + 88;
+  const g = ctx.createLinearGradient(right - width + 18, lineY, right - 18, lineY);
+  g.addColorStop(0, "transparent");
+  g.addColorStop(0.15, GOLD);
+  g.addColorStop(0.85, GOLD);
+  g.addColorStop(1, "transparent");
+  ctx.strokeStyle = g;
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  ctx.moveTo(right - width + 18, lineY);
+  ctx.lineTo(right - 18, lineY);
+  ctx.stroke();
+
+  ctx.fillStyle = "rgba(255,255,255,0.58)";
+  ctx.font = '400 12px "Playfair Display", serif';
+  ctx.fillText("Valid for Portfolio & Employment", right - 18, lineY + 22);
+  ctx.fillText("Issued by EduShell OS Training Program", right - 18, lineY + 40);
+}
+
 export async function drawCertificateCanvas(name, certId, dateStr, options = {}) {
   const { watermark = "" } = options;
   await loadFonts();
@@ -296,52 +449,23 @@ export async function drawCertificateCanvas(name, certId, dateStr, options = {})
   drawGoldDivider(ctx, W / 2, 615, 600);
   drawSeal(ctx, W / 2, 710, 62);
 
-  const sigY = 830;
-  ctx.textAlign = "left";
-  ctx.strokeStyle = "rgba(255,255,255,0.35)";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(180, sigY + 8);
-  ctx.lineTo(480, sigY + 8);
-  ctx.stroke();
-  ctx.fillStyle = GOLD_LIGHT;
-  ctx.font = '400 38px "Great Vibes", cursive';
-  ctx.fillText("Mohan Raj", 200, sigY);
-  ctx.fillStyle = "rgba(255,255,255,0.88)";
-  ctx.font = '700 18px "Cinzel", serif';
-  ctx.fillText("MOHAN RAJ", 180, sigY + 38);
-  ctx.fillStyle = "rgba(255,255,255,0.52)";
-  ctx.font = '400 13px "Playfair Display", serif';
-  ctx.fillText("Cyber Security Analyst · AI · ML", 180, sigY + 58);
-  ctx.fillText("Creator & Lead Instructor — EduShell OS", 180, sigY + 76);
-
-  ctx.textAlign = "right";
-  ctx.beginPath();
-  ctx.moveTo(W - 480, sigY + 8);
-  ctx.lineTo(W - 180, sigY + 8);
-  ctx.stroke();
-  ctx.fillStyle = "rgba(255,255,255,0.88)";
-  ctx.font = '700 18px "Cinzel", serif';
-  ctx.fillText(dateStr.toUpperCase(), W - 180, sigY + 38);
-  ctx.fillStyle = "rgba(255,255,255,0.52)";
-  ctx.font = '400 13px "Playfair Display", serif';
-  ctx.fillText("Date of Completion", W - 180, sigY + 58);
-  ctx.fillText("Valid for Portfolio & Employment", W - 180, sigY + 76);
+  drawAuthorSignatureBlock(ctx, 140, 800, 420);
+  drawDateBlock(ctx, W - 140, 800, 420, dateStr);
 
   ctx.textAlign = "center";
   ctx.fillStyle = "rgba(212, 175, 55, 0.12)";
-  ctx.fillRect(W / 2 - 420, 940, 840, 72);
+  ctx.fillRect(W / 2 - 420, 948, 840, 72);
   ctx.strokeStyle = "rgba(212, 175, 55, 0.3)";
-  ctx.strokeRect(W / 2 - 420, 940, 840, 72);
+  ctx.strokeRect(W / 2 - 420, 948, 840, 72);
   ctx.fillStyle = "rgba(255,255,255,0.45)";
   ctx.font = '600 12px "Cinzel", serif';
-  ctx.fillText(`CERTIFICATE ID  ·  ${certId}`, W / 2, 968);
+  ctx.fillText(`CERTIFICATE ID  ·  ${certId}`, W / 2, 976);
   ctx.font = "400 11px monospace";
   ctx.fillStyle = "rgba(255,255,255,0.38)";
-  ctx.fillText(`Verify authenticity: ${SITE_URL}`, W / 2, 992);
+  ctx.fillText(`Verify authenticity: ${SITE_URL}`, W / 2, 1000);
   ctx.font = '600 11px "Cinzel", serif';
   ctx.fillStyle = "rgba(212, 175, 55, 0.75)";
-  ctx.fillText("AUTHORIZED FOR LINKEDIN  ·  RESUME  ·  PORTFOLIO  ·  JOB APPLICATIONS", W / 2, 1018);
+  ctx.fillText("AUTHORIZED FOR LINKEDIN  ·  RESUME  ·  PORTFOLIO  ·  JOB APPLICATIONS", W / 2, 1026);
 
   if (watermark) {
     ctx.save();
